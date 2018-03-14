@@ -1,6 +1,7 @@
 # import the necessary packages
 from keras.preprocessing.image import img_to_array
 from keras.models import load_model
+from natsort import natsorted, ns
 from imutils import paths
 import random
 import numpy as np
@@ -22,32 +23,32 @@ args = vars(ap.parse_args())
 print("[INFO] loading network...")
 model = load_model(args["model"])
 
-images = list(paths.list_images(args["testpath"]))
+images = natsorted(list(paths.list_images(args["testpath"])),alg=ns.IGNORECASE)
 random.seed(42)
 
-ficheros = []
-labels = []
+with open("salida.csv","w", newline='') as csvfile:
+    spamwriter = csv.writer(csvfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    for imagepath in images:
+        image = cv2.imread(imagepath)
+        image = cv2.resize(image, (28, 28))
+        orig = image.copy()
+        # pre-process the image for classification
+        image = image.astype("float") / 255.0
+        image = img_to_array(image)
+        image = np.expand_dims(image, axis=0)
+        # classify the input image
+        (pistol, smartphone) = model.predict(image)[0]
+        # build the label
+        label = "0" if pistol > smartphone else "1"
+        spamwriter.writerow([imagepath.replace("./Test/","",1)]+[label])
+        proba = pistol if pistol > smartphone else smartphone
+        label = "{}: {:.2f}%".format(label, proba * 100)
 
-for imagepath in images:
-    image = cv2.imread(imagepath)
-    image = cv2.resize(image, (28, 28))
-    ficheros.append(imagepath)
-    orig = image.copy()
-    # pre-process the image for classification
-    image = image.astype("float") / 255.0
-    image = img_to_array(image)
-    image = np.expand_dims(image, axis=0)
-    # classify the input image
-    (pistol, smartphone) = model.predict(image)[0]
-    # build the label
-    label = "0" if pistol > smartphone else "1"
-    labels.append(label)
-    proba = pistol if pistol > smartphone else smartphone
-    label = "{}: {:.2f}%".format(label, proba * 100)
+#raw_data = {'ID': ficheros, 'Ground_Truth': labels}
+#df = pd.DataFrame(raw_data, columns = ['ID', 'Ground_Truth'])
+#df.to_csv("salida.csv", sep=',', index=False)
 
-raw_data = {'ID': ficheros, 'Ground_Truth': labels}
-df = pd.DataFrame(raw_data, columns = ['ID', 'Ground_Truth'])
-df.to_csv("salida.csv", sep=',', index=False)
+
 
 #Mostrar imagen:
 
