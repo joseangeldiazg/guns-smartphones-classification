@@ -8,6 +8,7 @@ from keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.image import img_to_array
 from keras.utils import to_categorical
+from keras.callbacks import ModelCheckpoint
 from imutils import paths
 import matplotlib.pyplot as plt
 import numpy as np
@@ -45,7 +46,7 @@ random.shuffle(imagePaths)
 for imagePath in imagePaths:
 	# load the image, pre-process it, and store it in the data list
 	image = cv2.imread(imagePath)
-	image = cv2.resize(image, (28, 28))
+	image = cv2.resize(image, (64, 64))
 	image = img_to_array(image)
 	data.append(image)
 
@@ -76,19 +77,26 @@ aug = ImageDataGenerator(rotation_range=30, width_shift_range=0.1,
 
 # initialize the model
 print("[INFO] compiling model...")
-model = LeNet.build(width=28, height=28, depth=3, classes=2)
+model = LeNet.build(width=64, height=64, depth=3, classes=2)
 opt = Adam(lr=INIT_LR, decay=INIT_LR / EPOCHS)
-model.compile(loss="binary_crossentropy", optimizer=opt,
-	metrics=["accuracy"])
+model.compile(loss="binary_crossentropy", optimizer=opt,metrics=["accuracy"])
+
+#Checkpoint
+
+filepath="./Models/checkpoints/bestmodel.hdf5"
+checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')
+callbacks_list = [checkpoint]
 
 # train the network
 print("[INFO] training network...")
 H = model.fit_generator(aug.flow(trainX, trainY, batch_size=BS),
-	validation_data=(testX, testY), steps_per_epoch=len(trainX) // BS,
+	callbacks=callbacks_list, validation_data=(testX, testY),
+	steps_per_epoch=len(trainX) // BS,
 	epochs=EPOCHS, verbose=1)
 
-# save the model to disk
+#Cargamos los mejores pesos del entrenamiento y guardamos el modelo
 print("[INFO] serializing network...")
+model.load_weights("./Models/checkpoints/bestmodel.hdf5")
 model.save(args["model"])
 
 # plot the training loss and accuracy
@@ -99,7 +107,7 @@ plt.plot(np.arange(0, N), H.history["loss"], label="train_loss")
 plt.plot(np.arange(0, N), H.history["val_loss"], label="val_loss")
 plt.plot(np.arange(0, N), H.history["acc"], label="train_acc")
 plt.plot(np.arange(0, N), H.history["val_acc"], label="val_acc")
-plt.title("Training Loss and Accuracy on Santa/Not Santa")
+plt.title("Training Loss and Accuracy on Pistol/Smartphone")
 plt.xlabel("Epoch #")
 plt.ylabel("Loss/Accuracy")
 plt.legend(loc="lower left")
