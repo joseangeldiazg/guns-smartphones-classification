@@ -26,11 +26,12 @@ model = load_model(args["model"])
 images = natsorted(list(paths.list_images(args["testpath"])),alg=ns.IGNORECASE)
 random.seed(42)
 
-with open("salida.csv","w", newline='') as csvfile:
+with open("./Output/salida.csv","w", newline='') as csvfile:
     spamwriter = csv.writer(csvfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+    spamwriter.writerow(["ID"]+["Ground_Truth"])
     for imagepath in images:
         image = cv2.imread(imagepath)
-        image = cv2.resize(image, (28, 28))
+        image = cv2.resize(image, (64, 64))
         orig = image.copy()
         # pre-process the image for classification
         image = image.astype("float") / 255.0
@@ -43,12 +44,6 @@ with open("salida.csv","w", newline='') as csvfile:
         spamwriter.writerow([imagepath.replace("./Test/","",1)]+[label])
         proba = pistol if pistol > smartphone else smartphone
         label = "{}: {:.2f}%".format(label, proba * 100)
-
-#raw_data = {'ID': ficheros, 'Ground_Truth': labels}
-#df = pd.DataFrame(raw_data, columns = ['ID', 'Ground_Truth'])
-#df.to_csv("salida.csv", sep=',', index=False)
-
-
 
 #Mostrar imagen:
 
