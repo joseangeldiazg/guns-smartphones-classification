@@ -28,7 +28,7 @@ ap.add_argument("-p", "--plot", type=str, default="plot.png",
 args = vars(ap.parse_args())
 # initialize the number of epochs to train for, initial learning rate,
 # and batch size
-EPOCHS = 10
+EPOCHS = 50
 INIT_LR = 1e-3
 BS = 32
 

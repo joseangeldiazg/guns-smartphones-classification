@@ -9,7 +9,7 @@ import imutils
 import os
 import csv
 import cv2
-import pandas
+import pandas as pd
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -22,10 +22,8 @@ args = vars(ap.parse_args())
 print("[INFO] loading network...")
 model = load_model(args["model"])
 
-images = sorted(list(paths.list_images(args["testpath"])))
-print(images)
+images = list(paths.list_images(args["testpath"]))
 random.seed(42)
-# loop over the input images
 
 ficheros = []
 labels = []
@@ -47,8 +45,9 @@ for imagepath in images:
     proba = pistol if pistol > smartphone else smartphone
     label = "{}: {:.2f}%".format(label, proba * 100)
 
-d = {'Id': ficheros, 'Growth_Truht': labels}
-d.to_csv("salida.csv", sep=',')
+raw_data = {'ID': ficheros, 'Ground_Truth': labels}
+df = pd.DataFrame(raw_data, columns = ['ID', 'Ground_Truth'])
+df.to_csv("salida.csv", sep=',', index=False)
 
 #Mostrar imagen:
 
