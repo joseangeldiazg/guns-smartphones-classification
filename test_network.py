@@ -10,6 +10,8 @@ import imutils
 import os
 import csv
 import cv2
+from PIL import ImageFilter
+from PIL import Image
 import pandas as pd
 
 # construct the argument parse and parse the arguments
@@ -27,23 +29,32 @@ images = natsorted(list(paths.list_images(args["testpath"])),alg=ns.IGNORECASE)
 random.seed(42)
 
 with open("./Output/salida.csv","w", newline='') as csvfile:
-    spamwriter = csv.writer(csvfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    spamwriter.writerow(["ID"]+["Ground_Truth"])
-    for imagepath in images:
-        image = cv2.imread(imagepath)
-        image = cv2.resize(image, (64, 64))
-        orig = image.copy()
+	spamwriter = csv.writer(csvfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+	spamwriter.writerow(["ID"]+["Ground_Truth"])
+	for imagepath in images:
+		image = Image.open(imagepath)
+		#image.resize(size, Image.ANTIALIAS)
+		image_filter = image.filter(ImageFilter.SMOOTH);
+		print (image_filter.mode)
+		if image_filter.mode == 'RGBA':
+			image_filter.save("./tmp/tst.thumnail.png")
+			image = cv2.imread("./tmp/tst.thumnail.png")
+		else:
+			image_filter.save("./tmp/tst.thumnail.jpg","JPEG")
+			image = cv2.imread("./tmp/tst.thumnail.jpg")
+		image = cv2.resize(image, (64, 64))
+		# orig = image.copy()
         # pre-process the image for classification
-        image = image.astype("float") / 255.0
-        image = img_to_array(image)
-        image = np.expand_dims(image, axis=0)
+		image = img_to_array(image)
+		image = image.astype("float") / 255.0
+		image = np.expand_dims(image, axis=0)
         # classify the input image
-        (pistol, smartphone) = model.predict(image)[0]
+		(pistol, smartphone) = model.predict(image)[0]
         # build the label
-        label = "0" if pistol > smartphone else "1"
-        spamwriter.writerow([imagepath.replace("./Test/","",1)]+[label])
-        proba = pistol if pistol > smartphone else smartphone
-        label = "{}: {:.2f}%".format(label, proba * 100)
+		label = "0" if pistol > smartphone else "1"
+		spamwriter.writerow([imagepath.replace("./Test/","",1)]+[label])
+		proba = pistol if pistol > smartphone else smartphone
+		label = "{}: {:.2f}%".format(label, proba * 100)
 
 #Mostrar imagen:
 

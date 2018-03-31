@@ -10,6 +10,8 @@ from keras.preprocessing.image import img_to_array
 from keras.utils import to_categorical
 from keras.callbacks import ModelCheckpoint
 from imutils import paths
+from PIL import ImageFilter
+from PIL import Image
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
@@ -45,10 +47,16 @@ random.shuffle(imagePaths)
 # loop over the input images
 for imagePath in imagePaths:
 	# load the image, pre-process it, and store it in the data list
-	image = cv2.imread(imagePath)
+	#image = cv2.imread(imagePath)
+	#image = cv2.resize(image, (64, 64))
+	#image = img_to_array(image)
+	image = Image.open(imagePath)
+	#image.resize(size, Image.ANTIALIAS)
+	image_filter = image.filter(ImageFilter.SMOOTH);
+	image_filter.save("./tmp/tst.thumnail.jpg","JPEG")
+	image = cv2.imread("./tmp/tst.thumnail.jpg")
 	image = cv2.resize(image, (64, 64))
-	image = img_to_array(image)
-	data.append(image)
+	data.append(img_to_array(image))
 
 	# extract the class label from the image path and update the
 	# labels list
