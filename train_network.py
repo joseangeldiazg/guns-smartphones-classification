@@ -18,7 +18,8 @@ import argparse
 import random
 import cv2
 import os
-from pyimagesearch.lenet import LeNet
+#from pyimagesearch.lenet import LeNet
+from keras.applications import InceptionV3 as LeNet #InceptionV3
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -31,7 +32,7 @@ ap.add_argument("-p", "--plot", type=str, default="plot.png",
 args = vars(ap.parse_args())
 # initialize the number of epochs to train for, initial learning rate,
 # and batch size
-EPOCHS = 1000
+EPOCHS = 10
 INIT_LR = 1e-3
 BS = 32
 
@@ -50,12 +51,12 @@ for imagePath in imagePaths:
 	#image = cv2.imread(imagePath)
 	#image = cv2.resize(image, (64, 64))
 	#image = img_to_array(image)
-	image = Image.open(imagePath)
+	#image = Image.open(imagePath)
 	#image.resize(size, Image.ANTIALIAS)
-	image_filter = image.filter(ImageFilter.SMOOTH);
-	image_filter.save("./tmp/tst.thumnail.jpg","JPEG")
-	image = cv2.imread("./tmp/tst.thumnail.jpg")
-	image = cv2.resize(image, (64, 64))
+	#image_filter = image.filter(ImageFilter.SMOOTH);
+	#image_filter.save("./tmp/tst.thumnail.jpg","JPEG")
+	image = cv2.imread(imagePath)
+	image = cv2.resize(image, (299, 299))
 	data.append(img_to_array(image))
 
 	# extract the class label from the image path and update the
@@ -85,7 +86,9 @@ aug = ImageDataGenerator(rotation_range=30, width_shift_range=0.1,
 
 # initialize the model
 print("[INFO] compiling model...")
-model = LeNet.build(width=64, height=64, depth=3, classes=2)
+#model = LeNet.build(width=64, height=64, depth=3, classes=2)
+model =  LeNet(input_shape=(299,299,3), weights='imagenet', include_top=False)
+#model = LeNet(weights='imagenet', include_top=False)
 opt = Adam(lr=INIT_LR, decay=INIT_LR / EPOCHS)
 model.compile(loss="binary_crossentropy", optimizer=opt,metrics=["accuracy"])
 
@@ -97,26 +100,39 @@ callbacks_list = [checkpoint]
 
 # train the network
 print("[INFO] training network...")
+# H = model.fit_generator(aug.flow(trainX, trainY, batch_size=BS),
+# 	callbacks=callbacks_list, validation_data=(testX, testY),
+# 	steps_per_epoch=len(trainX) // BS,
+# 	epochs=EPOCHS, verbose=1)
+
+#H = model.fit(self, x=trainX, y=trainY, batch_size=BS, epochs=EPOCHS, verbose=1, callbacks=callbacks_list, 
+#		validation_data=(testX, testY), steps_per_epoch=len(trainX) // BS)
+#H = model.fit_generator(aug.flow(trainX, trainY, batch_size=BS),
+#	callbacks=callbacks_list, validation_data=(testX, testY),
+#	steps_per_epoch=len(trainX) // BS,
+#	epochs=EPOCHS, verbose=1)
+
 H = model.fit_generator(aug.flow(trainX, trainY, batch_size=BS),
 	callbacks=callbacks_list, validation_data=(testX, testY),
 	steps_per_epoch=len(trainX) // BS,
 	epochs=EPOCHS, verbose=1)
 
+
 #Cargamos los mejores pesos del entrenamiento y guardamos el modelo
-print("[INFO] serializing network...")
-model.load_weights("./Models/checkpoints/bestmodel.hdf5")
-model.save(args["model"])
+#print("[INFO] serializing network...")
+#model.load_weights("./Models/checkpoints/bestmodel.hdf5")
+#model.save(args["model"])
 
 # plot the training loss and accuracy
-plt.style.use("ggplot")
-plt.figure()
-N = EPOCHS
-plt.plot(np.arange(0, N), H.history["loss"], label="train_loss")
-plt.plot(np.arange(0, N), H.history["val_loss"], label="val_loss")
-plt.plot(np.arange(0, N), H.history["acc"], label="train_acc")
-plt.plot(np.arange(0, N), H.history["val_acc"], label="val_acc")
-plt.title("Training Loss and Accuracy on Pistol/Smartphone")
-plt.xlabel("Epoch #")
-plt.ylabel("Loss/Accuracy")
-plt.legend(loc="lower left")
-plt.savefig(args["plot"])
+#plt.style.use("ggplot")
+#plt.figure()
+#N = EPOCHS
+#plt.plot(np.arange(0, N), H.history["loss"], label="train_loss")
+#plt.plot(np.arange(0, N), H.history["val_loss"], label="val_loss")
+#plt.plot(np.arange(0, N), H.history["acc"], label="train_acc")
+#plt.plot(np.arange(0, N), H.history["val_acc"], label="val_acc")
+#plt.title("Training Loss and Accuracy on Pistol/Smartphone")
+#plt.xlabel("Epoch #")
+#plt.ylabel("Loss/Accuracy")
+#plt.legend(loc="lower left")
+#plt.savefig(args["plot"])
